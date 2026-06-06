@@ -1,6 +1,6 @@
 ### <a id="jupyter-notebook-cells---interactive-navigation--parameter-inspection">Interactive Navigation & Parameter Inspection</a>
 <details>
-<summary><b>Tag: navigator1.0</b> – ⚠️  Interactive folder navigator and selector with following inspection of MainVars.py parameters and global saving</summary>
+<summary><b>Tag: navigator1.0</b> – Interactive folder navigator and selector with following inspection of MainVars.py parameters and global saving</summary>
 
 ⚠️ **CORE MODULE NOTICE:** This cell manages global pipeline state. **Do not modify the internal code** during routine execution.
 🔧 *Only enter this cell if you explicitly need to switch the normalization factor (e.g., change `Norm = fields['Mag']` to `fields['Elec']`). All folder selection and parameter inspection should be handled via the dropdown UI or downstream cells.*
@@ -23,7 +23,7 @@ Provides an interactive dropdown menu to browse predefined simulation directorie
 - Unused imports and placeholder paths have been cleaned; `InOtherInstitute` is preserved as a commented template.
 
 **Expected Output**:
-
+</details>
 
 ```python
 import os
@@ -150,7 +150,7 @@ None (inherits `selected_folder` and `Norm` from `navigator1.0`)
 - Does not alter state; purely diagnostic.
 
 **Expected Output**:
-
+</details>
 
 ```python
 # Optional sanity check: verify that the interactive selector has initialized global state
