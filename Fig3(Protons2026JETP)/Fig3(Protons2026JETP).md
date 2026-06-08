@@ -23,6 +23,7 @@ Provides an interactive dropdown menu to browse predefined simulation directorie
 - Unused imports and placeholder paths have been cleaned; `InOtherInstitute` is preserved as a commented template.
 
 **Expected Output**:
+</details>
 
 
 ```python
@@ -150,6 +151,7 @@ None (inherits `selected_folder` and `Norm` from `navigator1.0`)
 - Does not alter state; purely diagnostic.
 
 **Expected Output**:
+</details>
 
 
 ```python
@@ -167,36 +169,26 @@ else:
 
 ### <a id="jupyter-notebook-cells---helmholtz-decomposition-3x3-time-evolution">Helmholtz Decomposition 3x3 Time Evolution</a>
 <details>
-<summary><b>Tag: helmholtz_plotter1.0</b> – 3x3 matrix plot of Helmholtz components (Total, Gradient, Solenoidal) across 3 time dumps</summary>
+<summary><b>Tag: helmholtz_plotter1.0</b> – 3x3 matrix plot with row-wise component labels & selective axis notation</summary>
 
-⚠️ **USER WARNING:** This cell generates complex 3x3 grids. **Ensure `xmin_limit` and `xmax_limit` lists** match the number of dumps (default 3). If your dump list has fewer/more elements, adjust the limit lists or pass scalars to apply the same limit to all columns.
+⚠️ **USER WARNING:** Axis labels and Helmholtz notation are hardcoded to specific subplots to minimize clutter. Ensure your data ranges align with the requested plot layout.
 
 **Description**:  
-Generates a publication-ready 3x3 visualization comparing the Helmholtz decomposition of a field across three different time steps.
-- **Rows**: Helmholtz components (Total, Gradient/Longitudinal, Solenoidal/Transverse).
-- **Columns**: Temporal snapshots defined in `dumps`.
-- **Layers**: Density background (grayscale) + Field overlay (color).
-- **Features**: 
-  - Independent X-axis limits per column.
-  - Internal colorbars with automatic sub-ticks for high precision.
-  - Clean labels with LaTeX notation ($E_{x}$, $E_{es}$, $E_{v}$).
+Generates a publication-ready 3x3 visualization comparing the Helmholtz decomposition of a field across three time steps. Optimized for publication with minimal axis clutter and explicit row/column identification.
 
-**Key Features**:
-- 📐 **Flexible Limits**: `xmin_limit=[60, 60, 60]` allows zooming into different regions for each time step independently.
-- 🎨 **Smart Colorbars**: Auto-generated internal colorbars that adapt to the dynamic range of each subplot (`AutoMinorLocator`).
-- 🏷️ **Publication Labels**: Subplots automatically labeled (a) through (i).
+**Layout & Labeling**:
+- 🔹 **Row Labels**: `$E_{x}$`, `$E_{es}$`, `$E_{v}$` automatically placed in the top-left of the first column for each row.
+- 🔹 **Axis Labels**: `ylabel` shown only in `axes[1, 0]`; `xlabel` shown only in `axes[2, 1]`.
+- 🔹 **Subplot IDs**: `(a)` through `(i)` positioned in the top-right corner of each panel.
+- 🔹 **Time Stamps**: Centered at the top of the first row.
+
+**Key Parameters**:
+- `fontsize_labels`: Controls size of axis and component labels (default `14`).
+- `show_analysis_lines`: Toggles vertical/horizontal tracking lines.
+- `row1_x_positions` / `row2_x_ranges`: Configurable per-dump marker positions.
 
 **Dependencies**:  
 `h5py`, `numpy`, `matplotlib`, `os`.
-
-**Usage Notes**:
-- Requires `selected_folder` to be set via `navigator1.0`.
-- Fourier data is expected in `selected_folder/FourierFieldsOptimized/`.
-- `vrange_fourier` scales dynamically based on the maximum absolute value of the field in each plot.
-
-**Expected Output**:
-- 🖼️ 3x3 Plot Grid.
-- 📋 Console print confirming save if `save_fig=True`.
 </details>
 
 
@@ -207,7 +199,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
-def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
+def plot_9_subplots_helmholtz_time_comparison_limits_ticks_line_averaging(
     field="Elec",
     plane="xy",
     density="RhoEL",
@@ -220,7 +212,7 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
     alpha_fourier=0.85,
     vrange_density=(0.0, 3.0),
     vrange_fourier=(-0.99, 0.99),
-    figsize=(10.11, 10.5),
+    figsize=(10.45, 10.5),
     show_colorbars=True,
     save_fig=False,
     plot_density=True,
@@ -230,6 +222,7 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
     ymin_limit=-15,
     ymax_limit=15,
     tick_fontsize=13,
+    fontsize_labels=14,  # Added for axis & component labels
     cbar_tick_fontsize=12,
     # Colorbar styling
     cbar_left_pad=0.03,
@@ -248,17 +241,20 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
     line_border=True,
     line_position=80,
     line_color='green',
-    line_width=0.5
+    line_width=0.5,
+    # ►►► Analysis Lines Configuration ◄◄◄
+    show_analysis_lines=True,
+    row1_x_positions=[80, 81, 84],
+    row1_y_range=(-5.0, 5.0),
+    row2_x_ranges=[(80, 85), (83, 94), (94, 110)],
+    row2_y_position=0.0
 ):
     """
     Generates a 3x3 matrix of subplots comparing Helmholtz decomposition components across 3 dumps.
-    
-    - Rows: Helmholtz components (Total, Gradient, Solenoidal)
-    - Cols: Time dumps
-    - Features: Internal colorbars with sub-ticks, independent X-limits per column, clean subplot labels.
+    Restored: Green vertical line, Ticks on left/bottom, Axis labels only on specific subplots.
     """
     
-    # Paths (requires selected_folder from navigator)
+    # Paths
     folder_density = f"{selected_folder}/DataSlices/"
     folder_fourier = f"{selected_folder}/FourierFieldsOptimized/"
 
@@ -268,10 +264,7 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
         "Solenoidal": r"$E_{v}$"
     }
     
-    # sharex=False allows independent X limits per column
     fig, axes = plt.subplots(3, 3, figsize=figsize, sharex=False, sharey=True, squeeze=False)
-    fig.suptitle(f"{field}$_{{{component}}}$ ({plane}) - {'Density ' + density + ' + ' if plot_density else ''}Helmholtz Decomposition", 
-                 fontsize=16, y=0.985)
 
     # --- File Validation ---
     all_files_exist = True
@@ -279,7 +272,6 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
         fourier_file = os.path.join(folder_fourier, f"sliceTotalGradSolen_Dump_{str(dump).zfill(3)}.h5")
         try:
             with h5py.File(fourier_file, 'r') as f:
-                # Check existence of a known dataset
                 _ = f[field + "MultiField_Total_x_xy"]
         except Exception as e:
             print(f"⚠️ Fourier file missing for dump={dump}: {e}")
@@ -295,7 +287,7 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
                 all_files_exist = False
     
     if not all_files_exist:
-        raise FileNotFoundError("Required HDF5 files missing. Check paths or file names.")
+        raise FileNotFoundError("Required HDF5 files missing.")
 
     subplot_labels = ['(a)', '(b)', '(c)', '(d)', '(e)', '(f)', '(g)', '(h)', '(i)']
     last_im2 = None
@@ -305,7 +297,7 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
         for j, dump in enumerate(dumps):
             ax = axes[i, j]
             
-            # 1. Load Density Data (Background)
+            # 1. Load Density Data
             filename_density = os.path.join(folder_density, f"slice_Dump_{str(dump).zfill(3)}.h5")
             with h5py.File(filename_density, 'r') as f:
                 if plot_density:
@@ -317,11 +309,8 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
             xmin_file, ymin_file, _ = bounds
             xmax_file, ymax_file, _ = upper_bounds
 
-            # Apply column-specific X limits
             xmin_plot = xmin_limit[j] if isinstance(xmin_limit, (list, tuple)) else xmin_limit
             xmax_plot = xmax_limit[j] if isinstance(xmax_limit, (list, tuple)) else xmax_limit
-            
-            # Fallbacks
             xmin_plot = xmin_plot if xmin_plot is not None else xmin_file
             xmax_plot = xmax_plot if xmax_plot is not None else xmax_file
             ymin_plot = ymin_limit if ymin_limit is not None else ymin_file
@@ -329,18 +318,11 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
 
             # 2. Plot Density
             if plot_density:
-                ax.imshow(
-                    dataDensity.T,
-                    extent=[xmin_file, xmax_file, ymin_file, ymax_file],
-                    aspect='equal',
-                    cmap=cmap_density,
-                    alpha=alpha_density,
-                    vmin=vrange_density[0],
-                    vmax=vrange_density[1],
-                    zorder=1
-                )
+                ax.imshow(dataDensity.T, extent=[xmin_file, xmax_file, ymin_file, ymax_file],
+                          aspect='equal', cmap=cmap_density, alpha=alpha_density,
+                          vmin=vrange_density[0], vmax=vrange_density[1], zorder=1)
 
-            # 3. Load Fourier Data (Overlay)
+            # 3. Load & Plot Fourier Overlay
             filename_fourier = os.path.join(folder_fourier, f"sliceTotalGradSolen_Dump_{str(dump).zfill(3)}.h5")
             dset_name = f"{field}MultiField_{helmholtz}_{component}_{plane}"
             s_fourier = None
@@ -348,77 +330,92 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
             try:
                 with h5py.File(filename_fourier, 'r') as f_fourier:
                     s_fourier = f_fourier[dset_name][()]
-            except Exception as e:
-                print(f"⚠️ Fourier data unavailable for dump={dump}, {helmholtz}")
+            except Exception:
+                pass
 
-            # 4. Plot Fourier Overlay & Colorbar
             if s_fourier is not None and s_fourier.size > 0:
                 Efabs = max(abs(s_fourier.min()), abs(s_fourier.max()))
-                # Dynamic scaling
                 vmin_f, vmax_f = (vrange_fourier[0] * Efabs, vrange_fourier[1] * Efabs) if Efabs != 0 else (-1e-10, 1e-10)
                 
-                im2 = ax.imshow(
-                    s_fourier.T,
-                    extent=[xmin_file, xmax_file, ymin_file, ymax_file],
-                    aspect='equal',
-                    cmap=cmap_fourier,
-                    vmin=vmin_f,
-                    vmax=vmax_f,
-                    alpha=alpha_fourier,
-                    zorder=2
-                )
+                im2 = ax.imshow(s_fourier.T, extent=[xmin_file, xmax_file, ymin_file, ymax_file],
+                                aspect='equal', cmap=cmap_fourier, vmin=vmin_f, vmax=vmax_f,
+                                alpha=alpha_fourier, zorder=2)
                 last_im2 = im2
 
-                # Internal Colorbar with Sub-ticks
+                # Internal Colorbar
                 if show_colorbars:
                     cax = ax.inset_axes([0.12, 0.03, 0.76, 0.035])
                     cbar = fig.colorbar(im2, cax=cax, orientation='horizontal')
-                    
-                    # Ticks configuration
                     cbar.ax.xaxis.set_ticks_position('top')
                     cbar.ax.xaxis.set_label_position('top')
                     cbar.ax.tick_params(axis='x', labelsize=cbar_tick_fontsize, 
                                         top=True, bottom=False, labeltop=True, labelbottom=False, pad=2)
-                    
-                    # Add minor ticks (sub-ticks)
                     cbar.ax.xaxis.set_minor_locator(AutoMinorLocator(4))
-                    cbar.ax.tick_params(axis='x', which='minor', 
-                                        top=True, bottom=False, length=3, width=1, 
-                                        color=(0, 0, 0, 0.5))
-                    
-                    # Style transparency
+                    cbar.ax.tick_params(axis='x', which='minor', top=True, bottom=False, 
+                                        length=3, width=1, color=(0, 0, 0, 0.5))
                     cbar.ax.spines[:].set_visible(False)
                     cax.set_frame_on(False)
                     cax.patch.set_facecolor('white')
                     cax.patch.set_alpha(0.75)
 
-            # 5. Vertical Line Border
+            # 4. Legacy Vertical Border Line (RESTORED)
             if line_border:
                 ax.axvline(x=line_position, color=line_color, linestyle='--', linewidth=line_width, zorder=3)
 
-            # 6. Axes Limits & Ticks
+            # 5. Analysis Lines (New)
+            if show_analysis_lines:
+                if i == 0 and isinstance(row1_x_positions, (list, tuple)) and j < len(row1_x_positions):
+                    x_pos = row1_x_positions[j]
+                    y_min, y_max = row1_y_range
+                    ax.plot([x_pos, x_pos], [y_min, y_max], color='black', linestyle='--', linewidth=2, zorder=10)
+                elif i == 1 and isinstance(row2_x_ranges, (list, tuple)) and j < len(row2_x_ranges):
+                    x_start, x_end = row2_x_ranges[j]
+                    y_pos = row2_y_position
+                    ax.plot([x_start, x_end], [y_pos, y_pos], color='black', linestyle='-', linewidth=2, zorder=10)
+
+            # 6. Axes Limits & Ticks (CORRECTED)
             ax.set_xlim(xmin_plot, xmax_plot)
             ax.set_ylim(ymin_plot, ymax_plot)
-            
+
+            # Ticks & Labels Visibility: Show numbers on Left Col (j=0) and Bottom Row (i=2)
             ax.tick_params(
-                left=(j == 0),
-                bottom=(i == 2),
-                labelleft=(j == 0),
-                labelbottom=(i == 2),
+                left=(j == 0),       # Ticks visible
+                bottom=(i == 2),     # Ticks visible
+                labelleft=(j == 0),  # Numbers visible
+                labelbottom=(i == 2),# Numbers visible
                 labelsize=tick_fontsize,
                 colors='black'
             )
             for spine in ax.spines.values():
                 spine.set_visible(True)
+
+            # 7. TEXT LABELS
             
-            # 7. Labels
-            # Subplot index (a)-(i)
-            ax.text(0.05, 0.95, subplot_labels[i * 3 + j], transform=ax.transAxes,
+            # ►►► AXIS LABELS (Text) - ONLY in specific positions
+            # Clear existing labels first to ensure they only appear where requested
+            ax.set_ylabel("") 
+            ax.set_xlabel("")
+
+            if i == 1 and j == 0:  # Second row, first column
+                ax.set_ylabel(f"{plane[1]}/$\\lambda$", fontsize=fontsize_labels)
+
+            if i == 2 and j == 1:  # Third row, center column
+                ax.set_xlabel(f"{plane[0]}/$\\lambda$", fontsize=fontsize_labels)
+
+            # Helmholtz component notation (Left column only)
+            if j == 0:
+                ax.text(0.05, 0.90, helmholtz_notation[helmholtz],
+                        transform=ax.transAxes, fontsize=fontsize_labels+2, fontweight='bold',
+                        color='black', ha='left', va='top',
+                        bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.85))
+
+            # Subplot index (a)-(i) in top-right
+            ax.text(0.95, 0.95, subplot_labels[i * 3 + j], transform=ax.transAxes,
                     fontsize=15, fontweight='normal', fontstyle='normal', color='black',
-                    ha='left', va='top',
+                    ha='right', va='top',
                     bbox=dict(boxstyle='round,pad=0.25', facecolor='none', edgecolor='none'))
-            
-            # Time label (only top row)
+
+            # Time label (top row only)
             if i == 0:
                 ax.text(0.5, 0.98, f"t = {timeDump:.2f} fs",
                         transform=ax.transAxes, fontsize=12, fontweight='semibold',
@@ -438,55 +435,47 @@ def plot_9_subplots_helmholtz_time_comparison_limits_ticks(
 
 ### <a id="jupyter-notebook-cells---helmholtz-execution-example">Helmholtz Plot Execution Example</a>
 <details>
-<summary><b>Tag: helmholtz_runner1.0</b> – Concrete function call for 3-dump Helmholtz decomposition with custom zoom regions</summary>
+<summary><b>Tag: helmholtz_runner1.0</b> – 3-dump evolution with field-only view and tracked feature lines</summary>
 
-⚠️ **USER WARNING:** This block configures a specific visualization run. **Ensure `xmin_limit` and `xmax_limit` lists match the length of `dumps`** (3 elements here). Mismatched list lengths will cause indexing errors or unexpected zoom behavior.
+⚠️ **USER WARNING:** Check that the **Analysis Line ranges** (e.g., `row2_x_ranges`) are within the bounds of `xmin_limit` and `xmax_limit`. If a line is outside the plot limits, it will not be displayed.
 
 **Description**:  
-Executes the `plot_9_subplots_helmholtz_time_comparison_limits_ticks()` engine to render a 3x3 grid comparing Helmholtz decomposition components across three temporal snapshots (`dumps=[16, 20, 29]`).
-- **Density layer disabled**: `plot_density=False` renders only the field overlay for cleaner analysis of field structures.
-- **Per-column zoom**: Independent X-axis limits track the evolving interaction region across time.
-- **Auto-filename**: Output file encodes dump indices, component, density type, and colormap for organized versioning.
+Renders the 3x3 Helmholtz grid for dumps `[16, 20, 29]` with independent zoom windows. Includes specific analysis lines to mark the evolution of a feature (e.g., a cavity or front) across the first two rows of subplots.
 
-**Customization Guide**:
-- 🔹 **`dumps`**: List of dump indices. Must have corresponding HDF5 files in `DataSlices/` and `FourierFieldsOptimized/`.
-- 🔹 **`xmin_limit` / `xmax_limit`**: List of length `len(dumps)`. Use scalars (e.g., `xmin_limit=60`) to apply uniform limits.
-- 🔹 **`plot_density`**: Set `True` to overlay density background; `False` for field-only visualization.
-- 🔹 **`cmap_fourier`**: Colormap for field overlay. `"seismic"` for diverging red/blue, `"gist_rainbow_r"` for spectral.
-- 🔹 **`save_fig`**: Toggle file export. Filename auto-generated inside the function.
-
-**Dependencies**:  
-Requires `plot_9_subplots_helmholtz_time_comparison_limits_ticks` definition, global `Norm` (from `navigator1.0`), and `selected_folder`.
+**Customization**:
+- **Row 1 Markers**: Adjust `row1_x_positions` to move vertical dashed lines.
+- **Row 2 Markers**: Adjust `row2_x_ranges` to extend or shrink horizontal solid lines.
+- **Limits**: Ensure `xmax_limit` is large enough (e.g., `110` for the third dump) to show the full extent of the horizontal line in that column.
 
 **Expected Output**:
-- 🖼️ 3x3 grid plot with field-only rendering, per-column zoom, and internal colorbars with sub-ticks.
-- 💾 File saved as: `helmholtz_3x3_[16, 20, 29]_Ex_RhoEL_gist_rainbow_r.png` (example based on defaults).
-- 📋 Console confirmation: `✅ Figure saved: ...`
-
-**Execution Note**:
-```python
-# Adjust dumps/limits → Run cell → Verify console output confirms successful render & save
+- 🖼️ Grid with black dashed lines in row 1 and solid black lines in row 2.
+- 💾 Saved as `helmholtz_3x3_...png`.
+</details>
 
 
 ```python
-# ▶▶▶ Execution block: Helmholtz decomposition time evolution (3 dumps)
-plot_9_subplots_helmholtz_time_comparison_limits_ticks(
-    # Temporal snapshots to visualize
+# ▶▶▶ Execution block: Helmholtz decomposition with custom analysis lines
+plot_9_subplots_helmholtz_time_comparison_limits_ticks_line_averaging(
+    # Temporal snapshots
     dumps=[16, 20, 29],
     
-    # Visual style: Fourier field colormap
-    cmap_fourier="seismic",  # Options: "seismic", "gist_rainbow_r", "RdBu_r"
+    # Visual style
+    cmap_fourier="seismic",
+    plot_density=False,  # Field only
     
-    # Output configuration
-    save_fig=True,                  # Export PNG with auto-generated filename
-    plot_density=False,             # Show only field overlay (no density background)
+    # Column-specific zoom limits
+    xmin_limit=[65, 75, 79],
+    xmax_limit=[95, 105, 109],
     
-    # Column-specific X-axis limits (one value per dump in `dumps` list)
-    xmin_limit=[65, 75, 79],        # Left boundary for dumps 16, 20, 29 respectively
-    xmax_limit=[95, 105, 109],      # Right boundary for dumps 16, 20, 29 respectively
+    # Output
+    save_fig=True,
     
-    # Y-axis limits (shared across all subplots)
-    # ymin_limit=-15, ymax_limit=15  # Defaults from function signature
+    # ►►► NEW: Analysis Lines Configuration ◄◄◄
+    show_analysis_lines=True,
+    # Vertical lines in Row 1 (Top) at specific X positions
+    row1_x_positions=[81, 82, 84],
+    # Horizontal lines in Row 2 (Middle) spanning specific X ranges
+    row2_x_ranges=[(80, 84), (83, 94), (103, 110)]
 )
 ```
 
@@ -498,3 +487,8 @@ plot_9_subplots_helmholtz_time_comparison_limits_ticks(
 
     ✅ Figure saved: helmholtz_3x3_[16, 20, 29]_Ex_RhoEL_seismic.png
 
+
+
+```python
+
+```
