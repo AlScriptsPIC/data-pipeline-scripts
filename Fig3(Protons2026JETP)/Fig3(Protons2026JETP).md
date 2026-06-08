@@ -24,6 +24,7 @@ Provides an interactive dropdown menu to browse predefined simulation directorie
 
 **Expected Output**:
 
+</details>
 
 ```python
 import os
@@ -151,6 +152,7 @@ None (inherits `selected_folder` and `Norm` from `navigator1.0`)
 
 **Expected Output**:
 
+</details>
 
 ```python
 # Optional sanity check: verify that the interactive selector has initialized global state
@@ -197,8 +199,8 @@ Generates a publication-ready 3x3 visualization comparing the Helmholtz decompos
 **Expected Output**:
 - 🖼️ 3x3 Plot Grid.
 - 📋 Console print confirming save if `save_fig=True`.
-</details>
 
+</details>
 
 ```python
 import os
@@ -466,7 +468,8 @@ Requires `plot_9_subplots_helmholtz_time_comparison_limits_ticks` definition, gl
 **Execution Note**:
 ```python
 # Adjust dumps/limits → Run cell → Verify console output confirms successful render & save
-
+```
+</details>
 
 ```python
 # ▶▶▶ Execution block: Helmholtz decomposition time evolution (3 dumps)
